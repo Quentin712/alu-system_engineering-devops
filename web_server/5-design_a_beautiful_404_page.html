@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>404 | Ceci n'est pas une page</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 30%, #1e293b, #0b1120 70%); color: #e2e8f0; font-family: Georgia, "Times New Roman", serif; text-align: center; padding: 24px; overflow: hidden; }
+  .scene { max-width: 560px; width: 100%; }
+  .code { font-size: clamp(4.5rem, 22vw, 9rem); font-weight: 700; letter-spacing: 0.08em; color: #f59e0b; text-shadow: 0 0 30px rgba(245, 158, 11, 0.45); line-height: 1; }
+  svg { width: min(300px, 70%); height: auto; margin: 8px auto 0; display: block; overflow: visible; }
+  .smoke { fill: none; stroke: #94a3b8; stroke-width: 5; stroke-linecap: round; opacity: 0; animation: rise 4s ease-out infinite; }
+  .smoke.two { animation-delay: 1.3s; }
+  .smoke.three { animation-delay: 2.6s; }
+  h1 { font-size: clamp(1.4rem, 5vw, 2rem); font-style: italic; margin: 18px 0 10px; }
+  p { color: #94a3b8; line-height: 1.7; margin-bottom: 30px; }
+  a { display: inline-block; padding: 13px 30px; border-radius: 999px; background: #f59e0b; color: #0b1120; font-weight: 700; text-decoration: none; transition: transform 0.2s, box-shadow 0.2s; }
+  a:hover { transform: translateY(-3px) scale(1.04); box-shadow: 0 10px 25px rgba(245, 158, 11, 0.35); }
+  @keyframes rise { 0% { opacity: 0; transform: translateY(0) scale(0.8); } 20% { opacity: 0.8; } 100% { opacity: 0; transform: translateY(-70px) scale(1.4); } }
+</style>
+</head>
+<body>
+<div class="scene">
+  <div class="code">404</div>
+  <svg viewBox="0 0 300 160" role="img" aria-label="A smoking pipe">
+    <path class="smoke" d="M215 50 C200 35 230 25 215 8"/>
+    <path class="smoke two" d="M215 50 C200 35 230 25 215 8"/>
+    <path class="smoke three" d="M215 50 C200 35 230 25 215 8"/>
+    <rect x="200" y="55" width="40" height="55" rx="10" fill="#7c3f12"/>
+    <rect x="196" y="50" width="48" height="12" rx="6" fill="#a05a1f"/>
+    <path d="M205 105 C205 135 150 130 110 125 L40 118 C28 117 28 100 40 100 L110 106 C150 108 195 100 205 105 Z" fill="#7c3f12"/>
+    <rect x="22" y="98" width="26" height="22" rx="8" fill="#1e1e1e"/>
+  </svg>
+  <h1>Ceci n'est pas une page</h1>
+  <p>Error 404. The page you asked for does not exist, just like this pipe is not really a pipe. It is only a drawing of one.</p>
+  <a href="/">Take me home</a>
+</div>
+</body>
+</html>
