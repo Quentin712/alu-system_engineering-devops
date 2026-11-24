@@ -1,48 +1,24 @@
 #!/usr/bin/env bash
-# Setting up my load-balancer to do the round-robin
+# Configures a new Ubuntu machine: installs Nginx and adds the
+# X-Served-By response header containing the server hostname.
+# shellcheck disable=SC2016
 
-apt-get update -y
-apt-get install -y haproxy
+run() {
+    if [ "$(id -u)" -eq 0 ]; then
+        "$@"
+    else
+        sudo "$@"
+    fi
+}
 
-WEB01_PRIVATE_IP="13.40.19.34"
-WEB02_PRIVATE_IP="3.10.58.140"
+export DEBIAN_FRONTEND=noninteractive
+run apt-get update -y
+run apt-get install -y nginx
 
-echo "Configured backend: web-01 (${WEB01_PRIVATE_IP})"
-echo "Configured backend: web-02 (${WEB02_PRIVATE_IP})"
+# Remove any older copy of the header from the default site (avoids duplicates)
+run sed -i '/X-Served-By/d' /etc/nginx/sites-available/default
 
-cat > /etc/haproxy/haproxy.cfg <<EOF
-global
-    log /dev/log local0
-    log /dev/log local1 notice
-    maxconn 2048
+# Drop-in file loaded in the http block, so it applies to every server block
+echo 'add_header X-Served-By $hostname;' | run tee /etc/nginx/conf.d/custom_header.conf > /dev/null
 
-defaults
-    log global
-    mode http
-    option httplog
-    option dontlognull
-    timeout connect 5000
-    timeout client 50000
-    timeout server 50000
-
-frontend http_front
-    bind *:80
-    default_backend web_servers
-
-backend web_servers
-    balance roundrobin
-    option httpchk GET /
-    server web-01 ${WEB01_PRIVATE_IP}:80 check
-    server web-02 ${WEB02_PRIVATE_IP}:80 check
-EOF
-
-haproxy -c -f /etc/haproxy/haproxy.cfg
-
-update-rc.d haproxy defaults
-
-service haproxy restart
-
-echo "HAProxy backend configuration:"
-cat /etc/haproxy/haproxy.cfg
-
-service haproxy status
+run nginx -t && run service nginx restart
