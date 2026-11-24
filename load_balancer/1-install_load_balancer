@@ -1,21 +1,62 @@
 #!/usr/bin/env bash
-# Configures a new Ubuntu machine: installs Nginx and adds the
-# X-Served-By response header containing the server hostname.
-# shellcheck disable=SC2016
+# Installs and configures HAProxy on a new Ubuntu machine to balance
+# traffic between 7375-web-01 and 7375-web-02 using round robin.
 
-# Re-run this script as root if it was started by a normal user
+# Re-run as root if started by a normal user
 if [ "$(id -u)" -ne 0 ]; then
     exec sudo bash "$0" "$@"
 fi
 
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -y
-apt-get install -y nginx
+apt-get install -y haproxy
 
-# Remove any old copy of the header from the default site (avoids duplicates)
-sed -i '/X-Served-By/d' /etc/nginx/sites-available/default
+# Keep a backup of the original config (only once)
+cp -n /etc/haproxy/haproxy.cfg /etc/haproxy/haproxy.cfg.bak
 
-# Drop-in file loaded inside Nginx's http block
-echo 'add_header X-Served-By $hostname;' > /etc/nginx/conf.d/custom_header.conf
+# Write the full config (safe to run many times)
+cat > /etc/haproxy/haproxy.cfg <<'EOF'
+global
+    log /dev/log local0
+    maxconn 2048
+    user haproxy
+    group haproxy
+    daemon
 
-nginx -t && service nginx restart
+defaults
+    log global
+    mode http
+    option httplog
+    option dontlognull
+    timeout connect 5000
+    timeout client 50000
+    timeout server 50000
+
+frontend http_front
+    bind *:80
+    default_backend web_servers
+
+backend web_servers
+    balance roundrobin
+    server 7375-web-01 13.40.19.34:80 check
+    server 7375-web-02 3.10.58.140:80 check
+EOF
+
+# Enable HAProxy for the init script (older Ubuntu versions)
+if [ -f /etc/default/haproxy ]; then
+    sed -i 's/^ENABLED=0/ENABLED=1/' /etc/default/haproxy
+fi
+
+# Only continue if the config is valid
+if haproxy -c -f /etc/haproxy/haproxy.cfg; then
+    # Free port 80 if Nginx is using it
+    if command -v nginx > /dev/null 2>&1; then
+        service nginx stop
+        systemctl disable nginx 2> /dev/null
+    fi
+    systemctl enable haproxy 2> /dev/null
+    service haproxy restart
+else
+    echo "HAProxy config is invalid, nothing was changed" >&2
+    exit 1
+fi
